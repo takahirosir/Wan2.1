@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 sys.path.insert(0, '/'.join(osp.realpath(__file__).split('/')[:-2]))
 import wan
 from wan.configs import WAN_CONFIGS
-from wan.utils.prompt_extend import DashScopePromptExpander, QwenPromptExpander
+from wan.utils.prompt_extend import DashScopePromptExpander, QwenPromptExpander, TrivialPromptExpander
 from wan.utils.utils import cache_video
 
 # Global Var
@@ -161,7 +161,7 @@ def _parse_args():
         "--prompt_extend_method",
         type=str,
         default="local_qwen",
-        choices=["dashscope", "local_qwen"],
+        choices=["dashscope", "local_qwen", "trivial"],
         help="The prompt extend method to use.")
     parser.add_argument(
         "--prompt_extend_model",
@@ -177,7 +177,7 @@ def _parse_args():
 if __name__ == '__main__':
     args = _parse_args()
 
-    print("Step1: Init prompt_expander...", end='', flush=True)
+    print(f"Step1: Init prompt_expander: {args.prompt_extend_method}...")
     if args.prompt_extend_method == "dashscope":
         prompt_expander = DashScopePromptExpander(
             model_name=args.prompt_extend_model, is_vl=False)
@@ -185,8 +185,7 @@ if __name__ == '__main__':
         prompt_expander = QwenPromptExpander(
             model_name=args.prompt_extend_model, is_vl=False, device=0)
     else:
-        raise NotImplementedError(
-            f"Unsupport prompt_extend_method: {args.prompt_extend_method}")
+        prompt_expander = TrivialPromptExpander()
     print("done", flush=True)
 
     print("Step2: Init 1.3B t2v model...", end='', flush=True)
@@ -194,7 +193,7 @@ if __name__ == '__main__':
     wan_t2v = wan.WanT2V(
         config=cfg,
         checkpoint_dir=args.ckpt_dir,
-        device_id=0,
+        device='mps',
         rank=0,
         t5_fsdp=False,
         dit_fsdp=False,

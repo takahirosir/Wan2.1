@@ -152,6 +152,28 @@ class PromptExpander:
             return self.extend(prompt, system_prompt, seed, *args, **kwargs)
         else:
             raise NotImplementedError
+        
+class TrivialPromptExpander(PromptExpander):
+
+    def __init__(self):
+        super().__init__(model_name="trivial", is_vl=False, device=0)
+
+    def extend(self, prompt, system_prompt, seed=-1, *args, **kwargs):
+        return PromptOutput(
+            status=False,
+            prompt=prompt,
+            seed=seed,
+            system_prompt=system_prompt,
+            message=f"prompt: {prompt}\nsystem_prompt: {system_prompt}")
+
+    def extend_with_img(self,
+                        prompt,
+                        system_prompt,
+                        image: Union[Image.Image, str] = None,
+                        seed=-1,
+                        *args,
+                        **kwargs):
+        return self.extend(prompt, system_prompt, seed, *args, **kwargs)
 
 
 class DashScopePromptExpander(PromptExpander):

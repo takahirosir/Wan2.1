@@ -29,7 +29,7 @@ class WanT2V:
         self,
         config,
         checkpoint_dir,
-        device_id=0,
+        device='mps',
         rank=0,
         t5_fsdp=False,
         dit_fsdp=False,
@@ -57,7 +57,7 @@ class WanT2V:
             t5_cpu (`bool`, *optional*, defaults to False):
                 Whether to place T5 model on CPU. Only works without t5_fsdp.
         """
-        self.device = torch.device(f"cuda:{device_id}")
+        self.device = device
         self.config = config
         self.rank = rank
         self.t5_cpu = t5_cpu
@@ -66,10 +66,11 @@ class WanT2V:
         self.param_dtype = config.param_dtype
 
         shard_fn = partial(shard_model, device_id=device_id)
+        os.makedirs(checkpoint_dir, exist_ok=True)
         self.text_encoder = T5EncoderModel(
             text_len=config.text_len,
             dtype=config.t5_dtype,
-            device=torch.device('cpu'),
+            device=self.device,
             checkpoint_path=os.path.join(checkpoint_dir, config.t5_checkpoint),
             tokenizer_path=os.path.join(checkpoint_dir, config.t5_tokenizer),
             shard_fn=shard_fn if t5_fsdp else None)
